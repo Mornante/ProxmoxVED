@@ -5,6 +5,13 @@
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://docs.nginx.com/nginx/admin-guide/web-server/
 
+#!/usr/bin/env bash
+
+# Copyright (c) 2021-2026 community-scripts ORG
+# Author: Kristian Skov
+# License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
+# Source: https://nginx.org/en/docs/beginners_guide.html
+
 source /dev/stdin <<<"$FUNCTIONS_FILE_PATH"
 color
 verb_ip6
@@ -30,13 +37,15 @@ useradd ftpuser
 FTP_PASS=$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c13)
 usermod --password $(echo ${FTP_PASS} | openssl passwd -1 -stdin) ftpuser
 mkdir -p /var/www/html
+mkdir -p ${var_root_dir}
 usermod -d /var/www/html ftp
 usermod -d /var/www/html ftpuser
-chown ftpuser /var/www/html
+chown -R ftpuser /var/www/html
 
 sed -i "s|#write_enable=YES|write_enable=YES|g" /etc/vsftpd.conf
 sed -i "s|#chroot_local_user=YES|chroot_local_user=NO|g" /etc/vsftpd.conf
 
+systemctl enable -q vsftpd
 systemctl restart -q vsftpd.service
 
 {
@@ -63,6 +72,7 @@ server {
   }
 }
 EOF
+systemctl enable -q nginx
 systemctl reload nginx
 msg_ok "Nginx Server Created"
 
