@@ -5,11 +5,11 @@ source <(curl -s https://raw.githubusercontent.com/Mornante/ProxmoxVED/main/misc
 # License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
 # Source: https://docs.nginx.com/nginx/admin-guide/web-server/
 
-APP="Nginx App"
+APP="Dotnet ASP Web API"
 var_tags="${var_tags:-web}"
 var_cpu="${var_cpu:-1}"
-var_ram="${var_ram:-512}"
-var_disk="${var_disk:-2}"
+var_ram="${var_ram:-1024}"
+var_disk="${var_disk:-8}"
 var_os="${var_os:-ubuntu}"
 var_version="${var_version:-24.04}"
 var_unprivileged="${var_unprivileged:-0}"

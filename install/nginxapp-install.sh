@@ -17,18 +17,17 @@ msg_info "Installing Dependencies"
 $STD apt-get update
 $STD apt-get install -y \
   ssh \
-  nodejs \
-  npm \
+  software-properties-common
+
+$STD add-apt-repository -y ppa:dotnet/backports
+$STD apt-get install -y \
+  dotnet-sdk-9.0 \
   vsftpd \
   nginx
 msg_ok "Installed Dependencies"
 
-msg_info "Installing Angular CLI"
-$STD npm install -g @angular/cli
-msg_ok "Installed Angular CLI"
-
 var_project_name="default"
-read -r -p "${TAB3}Type the name of the Angular project: " var_project_name
+read -r -p "${TAB3}Type the assembly name of the project: " var_project_name
 
 msg_info "Setting up FTP Server"
 useradd ftpuser
@@ -55,47 +54,50 @@ msg_ok "FTP server setup completed"
 msg_info "Setting up Nginx Server"
 rm -f /var/www/html/index.nginx-debian.html
 
-cat >/etc/nginx/sites-available/default <<EOF
+sed "s/\$var_project_name/$var_project_name/g" >myfile <<'EOF' >/etc/nginx/sites-available/default
+map $http_connection $connection_upgrade {
+  "~*Upgrade" $http_connection;
+  default keep-alive;
+}
 server {
   listen        80;
-  server_name   ${var_project_name}.com *.${var_project_name}.com;
-  root          /var/www/html;
-  index         index.html;
-
+  server_name   $var_project_name.com *.$var_project_name.com;
   location / {
-      try_files \$uri \$uri/ /index.html;
-  }
-
-  location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-      expires 1y;
-      add_header Cache-Control "public, immutable";
+      proxy_pass         http://127.0.0.1:5000/;
+      proxy_http_version 1.1;
+      proxy_set_header   Upgrade $http_upgrade;
+      proxy_set_header   Connection $connection_upgrade;
+      proxy_set_header   Host $host;
+      proxy_cache_bypass $http_upgrade;
+      proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header   X-Forwarded-Proto $scheme;
   }
 }
 EOF
-
 systemctl reload nginx
 msg_ok "Nginx Server Created"
 
-msg_info "Creating Angular Service"
-cat <<EOF >/etc/systemd/system/angular-${var_project_name}.service
+msg_info "Creating Service"
+cat <<EOF >/etc/systemd/system/kestrel-aspnetapi.service
 [Unit]
-Description=Angular App - ${var_project_name}
-After=network.target
+Description=.NET Web API App running on Linux
 
 [Service]
 WorkingDirectory=/var/www/html
-ExecStart=/usr/bin/ng serve --host 0.0.0.0 --port 4200 --disable-host-check
+ExecStart=/usr/bin/dotnet /var/www/html/$var_project_name.dll
 Restart=always
+# Restart service after 10 seconds if the dotnet service crashes:
 RestartSec=10
 KillSignal=SIGINT
-SyslogIdentifier=angular-${var_project_name}
-User=ftpuser
-Environment=NODE_ENV=production
+SyslogIdentifier=dotnet-${var_project_name}
+User=root
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_NOLOGO=true
 
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl enable -q --now angular-${var_project_name}
+systemctl enable -q --now kestrel-aspnetapi
 msg_ok "Created Service"
 
 motd_ssh
