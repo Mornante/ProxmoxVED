@@ -17,20 +17,15 @@ msg_info "Installing Dependencies"
 $STD apt-get update
 $STD apt-get install -y \
   ssh \
-  curl \
-  gnupg \
+  nodejs \
+  npm \
   vsftpd \
   nginx
 msg_ok "Installed Dependencies"
 
-msg_info "Installing Node.js & Angular CLI"
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
-echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
-  | tee /etc/apt/sources.list.d/nodesource.list
-$STD apt-get update
-$STD apt-get install -y nodejs
+msg_info "Installing Angular CLI"
 $STD npm install -g @angular/cli
-msg_ok "Installed Node.js & Angular CLI"
+msg_ok "Installed Angular CLI"
 
 var_project_name="default"
 read -r -p "${TAB3}Type the name of the Angular project: " var_project_name
@@ -81,7 +76,7 @@ EOF
 systemctl reload nginx
 msg_ok "Nginx Server Created"
 
-msg_info "Creating Angular Build Watcher Service"
+msg_info "Creating Angular Service"
 cat <<EOF >/etc/systemd/system/angular-${var_project_name}.service
 [Unit]
 Description=Angular App - ${var_project_name}
