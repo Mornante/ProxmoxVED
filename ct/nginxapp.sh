@@ -8,7 +8,7 @@ source <(curl -s https://raw.githubusercontent.com/Mornante/ProxmoxVED/main/misc
 APP="Nginx App"
 var_tags="${var_tags:-web}"
 var_cpu="${var_cpu:-1}"
-var_ram="${var_ram:-256}"
+var_ram="${var_ram:-512}"
 var_disk="${var_disk:-2}"
 var_os="${var_os:-ubuntu}"
 var_version="${var_version:-24.04}"
